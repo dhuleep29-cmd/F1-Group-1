@@ -1,4 +1,4 @@
-%% CLASS I: Fuselage Mass Conventional (geometry-based)
+%% CLASS I: TBW (geometry-based)
 % Inputs (edit these):
 L = 59.8;      % fuselage length [m]  (Config A)
 D = 5.57;      % external diameter [m] (Config A)
