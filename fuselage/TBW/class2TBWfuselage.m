@@ -10,7 +10,7 @@ D_m    = 5.57;       % fuselage diameter [m]
 Sf_m2  = 1046.4;     % fuselage wetted area [m^2]
 
 % Aircraft weight
-MTOM_kg = 347451;    % design gross weight / MTOM [kg]
+MTOM_kg = 386618;    % design gross weight / MTOM [kg]
 Mdg_kg  = MTOM_kg;   % for Class II, take design gross weight = MTOM
 
 % Load / correction factors
