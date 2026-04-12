@@ -105,6 +105,29 @@ fprintf('Config B Class-I       : %.2f\n', B25.mWing_ClassI_kg/1e3);
 fprintf('Config A Refined       : %.2f\n', A25.mWing_Refined_kg/1e3);
 fprintf('Config B Refined       : %.2f\n', B25.mWing_Refined_kg/1e3);
 
+%% ---------------- Class II structural weight breakdown summary ----------------
+fprintf('\n====================================================\n');
+fprintf('CLASS II STRUCTURAL WEIGHT BREAKDOWN SUMMARY (2.5g)\n');
+fprintf('====================================================\n');
+
+fprintf('\n--- Config A ---\n');
+fprintf('Bending material (half-wing)   : %.2f t\n', A25.W_bending_half_kg/1e3);
+fprintf('Shear web weight (half-wing)   : %.2f t\n', A25.W_shearWeb_half_kg/1e3);
+fprintf('Torsion/skin weight (half-wing): %.2f t\n', A25.W_torsion_half_kg/1e3);
+fprintf('Ideal structure (half-wing)    : %.2f t\n', A25.W_ideal_half_kg/1e3);
+fprintf('Rib weight (half-wing)         : %.2f t\n', A25.W_rib_half_kg/1e3);
+fprintf('Non-ideal weight (half-wing)   : %.2f t\n', A25.W_nonIdeal_half_kg/1e3);
+fprintf('Total Class II structural wt   : %.2f t\n', A25.W_classII_total_kg/1e3);
+
+fprintf('\n--- Config B ---\n');
+fprintf('Bending material (half-wing)   : %.2f t\n', B25.W_bending_half_kg/1e3);
+fprintf('Shear web weight (half-wing)   : %.2f t\n', B25.W_shearWeb_half_kg/1e3);
+fprintf('Torsion/skin weight (half-wing): %.2f t\n', B25.W_torsion_half_kg/1e3);
+fprintf('Ideal structure (half-wing)    : %.2f t\n', B25.W_ideal_half_kg/1e3);
+fprintf('Rib weight (half-wing)         : %.2f t\n', B25.W_rib_half_kg/1e3);
+fprintf('Non-ideal weight (half-wing)   : %.2f t\n', B25.W_nonIdeal_half_kg/1e3);
+fprintf('Total Class II structural wt   : %.2f t\n', B25.W_classII_total_kg/1e3);
+
 %% ---------------- max stress summary ----------------
 fprintf('\n====================================================\n');
 fprintf('MAX STRESS SUMMARY (2.5g)\n');
@@ -124,6 +147,22 @@ fprintf('Max von Mises stress   : %.1f MPa\n', B25.sigmaVM_max_Pa/1e6);
 fprintf('Yield stress           : %.1f MPa\n', B25.sigmaY_Pa/1e6);
 fprintf('Allowable stress       : %.1f MPa\n', B25.sigmaAllow_Pa/1e6);
 
+%% ---------------- inertia relief summary ----------------
+fprintf('\n====================================================\n');
+fprintf('INERTIA RELIEF SUMMARY (2.5g)\n');
+fprintf('====================================================\n');
+
+fprintf('\n--- Config A ---\n');
+fprintf('Wing relief factor   : %.4f\n', A25.Rin_wing);
+fprintf('Fuel relief factor   : %.4f\n', A25.Rin_fuel);
+fprintf('Engine relief factor : %.4f\n', A25.Rin_engine);
+fprintf('Total relief factor  : %.4f\n', A25.Rin_total);
+
+fprintf('\n--- Config B ---\n');
+fprintf('Wing relief factor   : %.4f\n', B25.Rin_wing);
+fprintf('Fuel relief factor   : %.4f\n', B25.Rin_fuel);
+fprintf('Engine relief factor : %.4f\n', B25.Rin_engine);
+fprintf('Total relief factor  : %.4f\n', B25.Rin_total);
 %% ---------------- root wingbox sizing summary ----------------
 fprintf('\n====================================================\n');
 fprintf('ROOT WINGBOX SIZING SUMMARY (2.5g)\n');
@@ -445,3 +484,46 @@ xlabel('y [m]');
 ylabel('Skin / governing thickness [mm]');
 legend('Config A','Config B','Location','best');
 title('Root-to-tip governing thickness distribution (2.5g)');
+
+%% ---------------- Figure 12: Class II weight breakdown ----------------
+figure(12); clf;
+
+cats = categorical({'Bending','Shear Web','Torsion/Skin','Ribs','Non-Ideal','Total'});
+cats = reordercats(cats, {'Bending','Shear Web','Torsion/Skin','Ribs','Non-Ideal','Total'});
+
+Avals = [ ...
+    A25.W_bending_half_kg, ...
+    A25.W_shearWeb_half_kg, ...
+    A25.W_torsion_half_kg, ...
+    A25.W_rib_half_kg, ...
+    A25.W_nonIdeal_half_kg, ...
+    0.5*A25.W_classII_total_kg] / 1e3;
+
+Bvals = [ ...
+    B25.W_bending_half_kg, ...
+    B25.W_shearWeb_half_kg, ...
+    B25.W_torsion_half_kg, ...
+    B25.W_rib_half_kg, ...
+    B25.W_nonIdeal_half_kg, ...
+    0.5*B25.W_classII_total_kg] / 1e3;
+
+bar(cats, [Avals(:), Bvals(:)], 'grouped');
+grid on;
+ylabel('Weight [t per half-wing]');
+legend('Config A','Config B','Location','best');
+title('Class II structural weight breakdown comparison (2.5g)');
+
+%% ---------------- Figure 13: Inertia relief factors ----------------
+figure(13); clf;
+
+cats2 = categorical({'Wing','Fuel','Engine','Total'});
+cats2 = reordercats(cats2, {'Wing','Fuel','Engine','Total'});
+
+Arel = [A25.Rin_wing, A25.Rin_fuel, A25.Rin_engine, A25.Rin_total];
+Brel = [B25.Rin_wing, B25.Rin_fuel, B25.Rin_engine, B25.Rin_total];
+
+bar(cats2, [Arel(:), Brel(:)], 'grouped');
+grid on;
+ylabel('Relief factor [-]');
+legend('Config A','Config B','Location','best');
+title('Inertia relief factor comparison (2.5g)');

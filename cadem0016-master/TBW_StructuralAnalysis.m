@@ -148,6 +148,16 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     else
         yEngineFrac = 0.25;
     end
+    
+        if isfield(opts,'ribPitch'); ribPitch = opts.ribPitch; else; ribPitch = 0.75; end   % m
+    if isfield(opts,'kRib');     kRib     = opts.kRib;     else; kRib     = 0.005; end  % semi-empirical
+    if isfield(opts,'tRefRib');  tRefRib  = opts.tRefRib;  else; tRefRib  = 0.010; end  % m
+
+    if isfield(opts,'nonIdealFactor'); nonIdealFactor = opts.nonIdealFactor; else; nonIdealFactor = 0.12; end
+    if isfield(opts,'jointPenalty');   jointPenalty   = opts.jointPenalty;   else; jointPenalty   = 0.03; end
+    if isfield(opts,'manholePenalty'); manholePenalty = opts.manholePenalty; else; manholePenalty = 0.02; end
+    if isfield(opts,'attachPenalty');  attachPenalty  = opts.attachPenalty;  else; attachPenalty  = 0.03; end
+    if isfield(opts,'torsionPenalty'); torsionPenalty = opts.torsionPenalty; else; torsionPenalty = 0.04; end
     %% ---------------- derived geometry ----------------
     S = b^2 / AR;
     semiSpan = b/2;
@@ -428,10 +438,77 @@ EI_y = EAl .* Iyy_y;
 
 % Torsional stiffness already based on thin-walled closed box
 % GJ_y already computed above from J_y
+    %% ---------------- Class II structural weight build-up ----------------
+    % Bending material weight from effective spar-cap area
+    W_bending_half_kg = trapz(y, 2 .* Aeff_y .* rhoAl);
 
-    %% ---------------- crude refined mass ----------------
+    % Shear web weight (2 webs)
+    W_shearWeb_half_kg = trapz(y, 2 .* hBox_y .* tWeb_y .* rhoAl);
+
+    % Torsion/skin weight (closed box cover contribution)
+    perim_y = 2 .* (bBox_y + hBox_y);
+    W_torsion_half_kg = trapz(y, perim_y .* tSkin_y .* rhoAl);
+
+    % Ideal primary half-wing structural weight
+    W_ideal_half_kg = W_bending_half_kg + W_shearWeb_half_kg + W_torsion_half_kg;
+
+    % ---------------- inertia relief factors ----------------
+    % simple conceptual factors, mainly for reporting and interpretation
+    y_cp = trapz(y, y .* qLift) / max(trapz(y, qLift), 1e-9);
+    y_wg = trapz(y, y .* qStruct) / max(trapz(y, qStruct), 1e-9);
+
+    if any(qFuel > 0)
+        y_fuel = trapz(y, y .* qFuel) / max(trapz(y, qFuel), 1e-9);
+    else
+        y_fuel = 0;
+    end
+
+    Rin_wing = (y_wg / max(y_cp,1e-9)) * (mWing / MTOM);
+
+    if mFuel > 0
+        Rin_fuel = (y_fuel / max(y_cp,1e-9)) * (mFuel / MTOM);
+    else
+        Rin_fuel = 0;
+    end
+
+    if enableEngineLoad
+        Rin_engine = (y_engine / max(y_cp,1e-9)) * (mEngine_kg / MTOM);
+    else
+        Rin_engine = 0;
+    end
+
+    Rin_total = Rin_wing + Rin_fuel + Rin_engine;
+
+    % ---------------- rib weight ----------------
+    nRibs_half = max(2, ceil(semiSpan / ribPitch) + 1);
+    tMean_box = 0.5 * (mean(tWeb_y(validMask)) + mean(tSkin_y(validMask)));
+    W_rib_total_kg = rhoAl * kRib * S * (tRefRib + tMean_box);
+    W_rib_half_kg = 0.5 * W_rib_total_kg;
+
+    % ---------------- non-ideal penalties ----------------
+    W_nonIdeal_half_kg = W_ideal_half_kg * nonIdealFactor;
+
+    % optional explicit split for reporting
+    W_joint_half_kg   = W_ideal_half_kg * jointPenalty;
+    W_manhole_half_kg = W_ideal_half_kg * manholePenalty;
+    W_attach_half_kg  = W_ideal_half_kg * attachPenalty;
+    W_torsionPenalty_half_kg = W_ideal_half_kg * torsionPenalty;
+
+    % if explicit split exceeds generic non-ideal factor, use explicit sum
+    W_nonIdeal_explicit_half_kg = W_joint_half_kg + W_manhole_half_kg + ...
+                                  W_attach_half_kg + W_torsionPenalty_half_kg;
+
+    if W_nonIdeal_explicit_half_kg > W_nonIdeal_half_kg
+        W_nonIdeal_half_kg = W_nonIdeal_explicit_half_kg;
+    end
+
+    % ---------------- total Class II structural weight ----------------
+    W_classII_total_kg = 2 * (W_ideal_half_kg + W_rib_half_kg + W_nonIdeal_half_kg);
+
+    % keep old refined mass indicator too
     capMassHalf = trapz(y, 2 * Aeff_y * rhoAl);
     mWingRefined = 2 * capMassHalf * 1.8;
+
 
     %% ---------------- outputs ----------------
     Results = struct();
@@ -556,4 +633,38 @@ Results.GJ_y_Nm2 = GJ_y;
     Results.y_engine = y_engine;
     Results.engineWeight_N = engineWeight;
     Results.enginePointLoad = enginePointLoad;
+     Results.y_cp_m = y_cp;
+    Results.y_wingCG_m = y_wg;
+    Results.y_fuelCG_m = y_fuel;
+
+    Results.Rin_wing = Rin_wing;
+    Results.Rin_fuel = Rin_fuel;
+    Results.Rin_engine = Rin_engine;
+    Results.Rin_total = Rin_total;
+
+    Results.nRibs_half = nRibs_half;
+    Results.ribPitch_m = ribPitch;
+    Results.kRib = kRib;
+    Results.tRefRib_m = tRefRib;
+
+    Results.W_bending_half_kg = W_bending_half_kg;
+    Results.W_shearWeb_half_kg = W_shearWeb_half_kg;
+    Results.W_torsion_half_kg = W_torsion_half_kg;
+    Results.W_ideal_half_kg = W_ideal_half_kg;
+
+    Results.W_joint_half_kg = W_joint_half_kg;
+    Results.W_manhole_half_kg = W_manhole_half_kg;
+    Results.W_attach_half_kg = W_attach_half_kg;
+    Results.W_torsionPenalty_half_kg = W_torsionPenalty_half_kg;
+    Results.W_nonIdeal_half_kg = W_nonIdeal_half_kg;
+
+    Results.W_rib_half_kg = W_rib_half_kg;
+    Results.W_classII_total_kg = W_classII_total_kg;
+
+    Results.nonIdealFactor = nonIdealFactor;
+    Results.jointPenalty = jointPenalty;
+    Results.manholePenalty = manholePenalty;
+    Results.attachPenalty = attachPenalty;
+    Results.torsionPenalty = torsionPenalty;
 end
+   
