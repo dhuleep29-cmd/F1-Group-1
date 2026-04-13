@@ -36,6 +36,24 @@ Nx = 1000;
 x = linspace(0, Lf, Nx);
 dx = x(2) - x(1);
 
+%% ---------------- UNDERFLOOR AUXILIARY FUEL TANK INTEGRATION ----------------
+% Auxiliary fuel tank below main cargo deck
+% Longitudinal location provided/refined from team input
+
+x_tank_start = 26.0;           % [m]
+x_tank_end   = 31.0;           % [m]
+tank_length  = x_tank_end - x_tank_start;        % [m]
+x_tank_centre = 0.5 * (x_tank_start + x_tank_end);
+
+m_fuel_aux = 6100;             % [kg] auxiliary fuel mass required
+rho_fuel = 800;                % [kg/m^3] Jet-A1 (kerosene-based fuel)
+V_fuel_aux = m_fuel_aux / rho_fuel;              % [m^3]
+
+A_tank_use = V_fuel_aux / tank_length;           % [m^2] required usable tank area
+
+m_tank_integration = 300;      % [kg] structural allowance for supports/reinforcement
+
+
 %% ---------------- DISTRIBUTED LOADS ----------------
 % Fuselage self-weight distributed over entire fuselage
 w_fus = (m_fus * g * n) / Lf;      % [N/m]
@@ -46,8 +64,14 @@ payload_per_m = (m_payload * g * n) / L_cargo;   % [N/m]
 w_pay = zeros(size(x));
 w_pay(x >= x_cargo_start & x <= x_cargo_end) = payload_per_m;
 
+% Auxiliary fuel distributed only over tank region
+fuel_per_m = (m_fuel_aux * g * n) / tank_length;   % [N/m]
+
+w_fuel = zeros(size(x));
+w_fuel(x >= x_tank_start & x <= x_tank_end) = fuel_per_m;
+
 % Total distributed load (downward)
-w_total = w_fus + w_pay;           % [N/m]
+w_total = w_fus + w_pay + w_fuel;           % [N/m]
 
 %% ---------------- TOTAL DOWNWARD LOAD ----------------
 W_total = trapz(x, w_total);       % [N]
@@ -332,24 +356,14 @@ fprintf('Door size (W x H)        = %.2f m x %.2f m\n', door_width, door_height)
 fprintf('Door side                = %s\n', door_side);
 fprintf('Door mass added          = %.2f kg\n', m_door_total);
 
-%% ---------------- FUSELAGE FUEL TANK INTEGRATION ----------------
-% First-pass centre tank assumption near wing box
-
-x_tank_start = 0.26 * Lf;
-x_tank_end   = 0.31 * Lf;
-tank_length  = x_tank_end - x_tank_start;
-
-m_fuel_center = 10000;   % [kg] assumed centre tank fuel mass
-rho_fuel = 800;          % [kg/m^3] Jet-A1
-V_fuel_center = m_fuel_center / rho_fuel;
-
-m_tank_integration = 400;   % [kg] structural allowance
-
-fprintf('\n--- Fuselage Fuel Tank Integration ---\n');
-fprintf('Centre tank location         = %.2f m to %.2f m\n', x_tank_start, x_tank_end);
-fprintf('Centre tank length           = %.2f m\n', tank_length);
-fprintf('Centre tank fuel mass        = %.2f kg\n', m_fuel_center);
-fprintf('Centre tank fuel volume      = %.2f m^3\n', V_fuel_center);
+fprintf('\n--- Underfloor Auxiliary Fuel Tank Integration ---\n');
+fprintf('Auxiliary tank start         = %.2f m\n', x_tank_start);
+fprintf('Auxiliary tank end           = %.2f m\n', x_tank_end);
+fprintf('Auxiliary tank length        = %.2f m\n', tank_length);
+fprintf('Auxiliary tank centre        = %.2f m\n', x_tank_centre);
+fprintf('Auxiliary fuel mass          = %.2f kg\n', m_fuel_aux);
+fprintf('Auxiliary fuel volume        = %.2f m^3\n', V_fuel_aux);
+fprintf('Required usable tank area    = %.2f m^2\n', A_tank_use);
 fprintf('Tank integration mass        = %.2f kg\n', m_tank_integration);
 %% ---------------- MASS CALCULATION ----------------
 rho = 2780;                     % aluminium density [kg/m^3]
