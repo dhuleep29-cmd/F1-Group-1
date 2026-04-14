@@ -6,8 +6,8 @@ close all;
 
 % ---------------- UPDATED DATA ----------------
 % Loading order: OEW -> MZFW -> Take-off
-cg_mac = [31.9, 29.1, 14.8];
-mass_t = [152.465, 244.465, 358.085];
+cg_mac = [31.9, 29.1, 14.3];
+mass_t = [152.465, 244.465, 364.465];
 
 % ---------------- PLOT ----------------
 figure;
@@ -29,11 +29,8 @@ xline(15, '--', 'Forward CG Limit');
 xline(35, '--', 'Aft CG Limit');
 
 % ---------------- LOADING LABELS ----------------
-% OEW -> MZFW
 text(30.0, 195, 'Payload Loading', 'FontSize', 10);
-
-% MZFW -> Take-off
-text(21.5, 300, 'Fuel Loading', 'FontSize', 10);
+text(21.5, 305, 'Fuel Loading', 'FontSize', 10);
 
 hold off;
 
@@ -41,3 +38,4 @@ hold off;
 % MAC = 4.7 m
 % LEMAC = 29.25 m
 % Updated fuselage mass = 18,492.62 kg
+% Updated mission fuel = 120,000 kg
