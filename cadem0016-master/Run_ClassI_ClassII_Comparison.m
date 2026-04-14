@@ -22,7 +22,7 @@ close all
 %% =========================================================
 
 %% ---------------- common assumptions ----------------
-MTOM_kg = 280000;
+MTOM_kg = 350000;
 tc = 0.12;              % thickness-to-chord ratio
 nult = 2.5;             % manoeuvre sizing factor
 fuelFrac = 0.19;        % for Raymer weak fuel term

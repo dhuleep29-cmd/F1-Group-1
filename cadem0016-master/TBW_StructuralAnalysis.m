@@ -46,7 +46,7 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
             b_default  = 64.0;
             AR_default = 12.0;
             lambda_default = 0.28;
-            MTOM_default   = 280000; % kg
+            MTOM_default   = 350000; % kg
 
             hasStrut = false;
             yStrutFrac_default = NaN;
@@ -57,7 +57,7 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
             b_default  = 80.0;
             AR_default = 14.0;
             lambda_default = 0.28;
-            MTOM_default   = 280000; % kg
+            MTOM_default   = 350000; % kg
 
             hasStrut = true;
             yStrutFrac_default = 0.45;
@@ -140,7 +140,7 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     if isfield(opts,'mEngine_kg')
         mEngine_kg = opts.mEngine_kg;
     else
-        mEngine_kg = 7000;
+        mEngine_kg = 8761;
     end
 
     if isfield(opts,'yEngineFrac')
@@ -505,6 +505,16 @@ EI_y = EAl .* Iyy_y;
     % ---------------- total Class II structural weight ----------------
     W_classII_total_kg = 2 * (W_ideal_half_kg + W_rib_half_kg + W_nonIdeal_half_kg);
 
+        %% ---------------- secondary structure allowance ----------------
+    if isfield(opts,'secondaryFactor')
+        secondaryFactor = opts.secondaryFactor;
+    else
+        secondaryFactor = 0.35f;
+    end
+
+    W_secondary_total_kg = secondaryFactor * W_classII_total_kg;
+    W_wing_realistic_total_kg = W_classII_total_kg + W_secondary_total_kg;
+
     % keep old refined mass indicator too
     capMassHalf = trapz(y, 2 * Aeff_y * rhoAl);
     mWingRefined = 2 * capMassHalf * 1.8;
@@ -666,5 +676,8 @@ Results.GJ_y_Nm2 = GJ_y;
     Results.manholePenalty = manholePenalty;
     Results.attachPenalty = attachPenalty;
     Results.torsionPenalty = torsionPenalty;
+        Results.secondaryFactor = secondaryFactor;
+    Results.W_secondary_total_kg = W_secondary_total_kg;
+    Results.W_wing_realistic_total_kg = W_wing_realistic_total_kg;
 end
    

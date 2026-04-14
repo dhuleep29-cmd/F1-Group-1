@@ -13,7 +13,7 @@ optsA.AR = 12;
 optsA.span = 70;
 optsA.lambda = 0.35;
 optsA.sweep = 15;
-optsA.MTOM = 280000;
+optsA.MTOM = 350000;
 optsA.enableAeroelastic = false;
 
 % ---------- TBW ----------
@@ -22,7 +22,7 @@ optsB.AR = 14;
 optsB.span = 70;
 optsB.lambda = 0.35;
 optsB.sweep = 15;
-optsB.MTOM = 280000;
+optsB.MTOM = 350000;
 optsB.enableAeroelastic = false;
 
 RA = TBW_StructuralAnalysis('A', 2.5, optsA);

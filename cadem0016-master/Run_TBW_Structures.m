@@ -513,6 +513,8 @@ ylabel('Weight [t per half-wing]');
 legend('Config A','Config B','Location','best');
 title('Class II structural weight breakdown comparison (2.5g)');
 
+
+
 %% ---------------- Figure 13: Inertia relief factors ----------------
 figure(13); clf;
 
@@ -527,3 +529,6 @@ grid on;
 ylabel('Relief factor [-]');
 legend('Config A','Config B','Location','best');
 title('Inertia relief factor comparison (2.5g)');
+
+fprintf('Config A realistic total wing: %.2f t\n', A25.W_wing_realistic_total_kg/1e3);
+fprintf('Config B realistic total wing: %.2f t\n', B25.W_wing_realistic_total_kg/1e3);

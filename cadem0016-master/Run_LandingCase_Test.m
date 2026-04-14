@@ -8,7 +8,7 @@ opts_nom.AR = 14;
 opts_nom.span = 70;
 opts_nom.lambda = 0.35;
 opts_nom.sweep = 15;
-opts_nom.MTOM = 280000;
+opts_nom.MTOM = 280350000;
 opts_nom.enableLandingCase = false;
 
 opts_land = opts_nom;

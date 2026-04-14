@@ -13,7 +13,7 @@ AR0     = 14;
 span0   = 70;
 lambda0 = 0.28;
 sweep0  = 25;
-MTOM0   = 280000;
+MTOM0   = 350000;
 
 %% ---------------- parameter ranges ----------------
 AR_list     = [8 10 12 14 16 18];

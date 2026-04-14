@@ -13,7 +13,7 @@ baseOpts.AR = 14;
 baseOpts.span = 70;
 baseOpts.lambda = 0.35;
 baseOpts.sweep = 15;
-baseOpts.MTOM = 280000;
+baseOpts.MTOM = 300000;
 
 %% ---------------- define load cases ----------------
 Cases = {};
