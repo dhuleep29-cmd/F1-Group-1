@@ -1,19 +1,13 @@
-% CG Loading Diagram - Mass & Stability (Class II)
-% Shows OEW, MZFW, and Take-off CG positions
-% MAC = 4.7 m
-% LEMAC = 29.25 m
-% CG limits = 15% to 35% MAC
-
 % ================= CG LOADING DIAGRAM =================
 
 clc;
 clear;
 close all;
 
-% ---------------- DATA ----------------
+% ---------------- UPDATED DATA ----------------
 % Loading order: OEW -> MZFW -> Take-off
-cg_mac = [33.6, 30.6, 16.8];           
-mass_t  = [181.061, 273.061, 386.681]; 
+cg_mac = [31.9, 29.1, 14.8];
+mass_t = [152.465, 244.465, 358.085];
 
 % ---------------- PLOT ----------------
 figure;
@@ -23,7 +17,7 @@ hold on;
 
 xlabel('CG (%MAC)');
 ylabel('Mass (t)');
-title('Preliminary CG Loading Diagram');
+title('Updated Preliminary CG Loading Diagram');
 
 % ---------------- POINT LABELS ----------------
 text(cg_mac(1), mass_t(1), '  OEW');
@@ -34,13 +28,16 @@ text(cg_mac(3), mass_t(3), '  Take-off');
 xline(15, '--', 'Forward CG Limit');
 xline(35, '--', 'Aft CG Limit');
 
-% ---------------- LOADING LABELS (FIXED) ----------------
-% Payload loading (OEW -> MZFW)
-text(31.5, 230, 'Payload Loading', 'FontSize', 10);
+% ---------------- LOADING LABELS ----------------
+% OEW -> MZFW
+text(30.0, 195, 'Payload Loading', 'FontSize', 10);
 
-% Fuel loading (MZFW -> Take-off)
-text(24, 320, 'Fuel Loading', 'FontSize', 10);
+% MZFW -> Take-off
+text(21.5, 300, 'Fuel Loading', 'FontSize', 10);
 
 hold off;
 
-% ================= END =================
+% ================= REFERENCE VALUES =================
+% MAC = 4.7 m
+% LEMAC = 29.25 m
+% Updated fuselage mass = 18,492.62 kg
