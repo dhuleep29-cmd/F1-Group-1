@@ -509,7 +509,7 @@ EI_y = EAl .* Iyy_y;
     if isfield(opts,'secondaryFactor')
         secondaryFactor = opts.secondaryFactor;
     else
-        secondaryFactor = 0.35f;
+        secondaryFactor = 0.30;
     end
 
     W_secondary_total_kg = secondaryFactor * W_classII_total_kg;
