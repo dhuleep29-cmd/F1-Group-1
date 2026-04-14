@@ -46,23 +46,23 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
             b_default  = 64.0;
             AR_default = 12.0;
             lambda_default = 0.28;
-            MTOM_default   = 350000; % kg
+            MTOM_default   = 330000; % kg
 
             hasStrut = false;
             yStrutFrac_default = NaN;
             strutShare_default = 0.0;
-            kwing_default = 200;
+            kwing_default = 100;
 
         case 'B'
             b_default  = 80.0;
             AR_default = 14.0;
             lambda_default = 0.28;
-            MTOM_default   = 350000; % kg
+            MTOM_default   = 330000; % kg
 
             hasStrut = true;
             yStrutFrac_default = 0.45;
             strutShare_default = 0.25;
-            kwing_default = 200;
+            kwing_default = 100;
 
         otherwise
             error('configName must be ''A'' or ''B''.');
