@@ -4,10 +4,9 @@ clc;
 clear;
 close all;
 
-% ---------------- UPDATED DATA ----------------
-% Loading order: OEW -> MZFW -> Take-off
-cg_mac = [31.9, 29.1, 14.3];
-mass_t = [152.465, 244.465, 364.465];
+% ---------------- FINAL DATA ----------------
+cg_mac = [34.7, 29.1, 17.7];
+mass_t = [116.365, 208.365, 328.365];
 
 % ---------------- PLOT ----------------
 figure;
@@ -17,25 +16,27 @@ hold on;
 
 xlabel('CG (%MAC)');
 ylabel('Mass (t)');
-title('Updated Preliminary CG Loading Diagram');
+title('Final CG Loading Diagram');
 
-% ---------------- POINT LABELS ----------------
+% ---------------- LABELS ----------------
 text(cg_mac(1), mass_t(1), '  OEW');
 text(cg_mac(2), mass_t(2), '  MZFW');
 text(cg_mac(3), mass_t(3), '  Take-off');
 
-% ---------------- CG LIMITS ----------------
+% ---------------- LIMITS ----------------
 xline(15, '--', 'Forward CG Limit');
 xline(35, '--', 'Aft CG Limit');
 
-% ---------------- LOADING LABELS ----------------
-text(30.0, 195, 'Payload Loading', 'FontSize', 10);
-text(21.5, 305, 'Fuel Loading', 'FontSize', 10);
+% ---------------- LOADING ----------------
+text(31.5, 150, 'Payload Loading', 'FontSize', 10);
+text(22.5, 260, 'Fuel Loading', 'FontSize', 10);
 
 hold off;
 
-% ================= REFERENCE VALUES =================
+% ================= NOTES =================
 % MAC = 4.7 m
-% LEMAC = 29.25 m
-% Updated fuselage mass = 18,492.62 kg
-% Updated mission fuel = 120,000 kg
+% LEMAC = 29.35 m
+% 25% MAC = 30.53 m
+% Wing mass = 36 t
+% Tail masses updated
+% Fuel = 120 t
