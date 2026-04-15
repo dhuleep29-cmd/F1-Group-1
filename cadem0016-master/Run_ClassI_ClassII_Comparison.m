@@ -23,7 +23,7 @@ close all
 
 %% ---------------- common assumptions ----------------
 MTOM_kg = 350000;
-tc = 0.12;              % thickness-to-chord ratio
+tc = 0.16;              % thickness-to-chord ratio
 nult = 2.5;             % manoeuvre sizing factor
 fuelFrac = 0.19;        % for Raymer weak fuel term
 qCruise_Pa = 5500;      % representative cruise dynamic pressure
@@ -38,7 +38,7 @@ Conv.name   = 'Conventional';
 
 TBW.AR     = 14;
 TBW.span   = 70;
-TBW.sweep  = 15;
+TBW.sweep  = 26;
 TBW.lambda = 0.35;
 TBW.name   = 'TBW';
 

@@ -6,7 +6,7 @@ opts_no = struct();
 opts_no.AR = 14;
 opts_no.span = 70;
 opts_no.lambda = 0.28;
-opts_no.sweep = 25;
+opts_no.sweep = 26;
 opts_no.enableAeroelastic = false;
 
 opts_yes = opts_no;

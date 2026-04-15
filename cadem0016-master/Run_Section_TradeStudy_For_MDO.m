@@ -20,7 +20,7 @@ baseOpts = struct();
 baseOpts.AR = 14;
 baseOpts.span = 70;
 baseOpts.lambda = 0.35;
-baseOpts.sweep = 15;
+baseOpts.sweep = 26;
 baseOpts.MTOM = 350000;
 
 %% ---------------- constants ----------------

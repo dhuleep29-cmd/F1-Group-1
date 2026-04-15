@@ -7,8 +7,8 @@ opts = struct();
 opts.AR = 14;
 opts.span = 70;
 opts.lambda = 0.35;
-opts.sweep = 15;
-opts.MTOM = 280350000;
+opts.sweep = 25;
+opts.MTOM = 350000;
 
 R = TBW_StructuralAnalysis('B', 2.5, opts);
 

@@ -6,7 +6,7 @@ opts_no = struct();
 opts_no.AR = 14;
 opts_no.span = 70;
 opts_no.lambda = 0.35;
-opts_no.sweep = 15;
+opts_no.sweep = 26;
 opts_no.MTOM = 350000;
 opts_no.enableEngineLoad = false;
 

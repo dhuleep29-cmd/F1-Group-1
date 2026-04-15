@@ -12,7 +12,7 @@ optsA = struct();
 optsA.AR = 12;
 optsA.span = 70;
 optsA.lambda = 0.35;
-optsA.sweep = 15;
+optsA.sweep = 26;
 optsA.MTOM = 350000;
 optsA.enableAeroelastic = false;
 
@@ -21,7 +21,7 @@ optsB = struct();
 optsB.AR = 14;
 optsB.span = 70;
 optsB.lambda = 0.35;
-optsB.sweep = 15;
+optsB.sweep = 26;
 optsB.MTOM = 350000;
 optsB.enableAeroelastic = false;
 

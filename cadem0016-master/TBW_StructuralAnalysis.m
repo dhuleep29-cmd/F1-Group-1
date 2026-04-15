@@ -28,7 +28,7 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     N = 400;
 
     fuelFrac_default = 0.19;
-    fuelSpanFrac_default = 0.60;
+    fuelSpanFrac_default = 0.70;
 
     %% ---------------- material: Aluminium 7050-T7451 ----------------
     rhoAl   = 2830;         % kg/m^3
@@ -37,8 +37,8 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     sigmaY  = 455e6;        % Pa
     tauY    = 0.58 * sigmaY; % Pa approx shear yield
 
-    sigmaAllow_default = 300e6; % Pa
-    tauAllow_default   = 170e6; % Pa
+    sigmaAllow_default = 280e6; % Pa
+    tauAllow_default   = 130e6; % Pa
 
     %% ---------------- configuration defaults ----------------
     switch upper(configName)
@@ -46,7 +46,7 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
             b_default  = 64.0;
             AR_default = 12.0;
             lambda_default = 0.28;
-            MTOM_default   = 330000; % kg
+            MTOM_default   = 360000; % kg
 
             hasStrut = false;
             yStrutFrac_default = NaN;
@@ -54,14 +54,14 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
             kwing_default = 100;
 
         case 'B'
-            b_default  = 80.0;
+            b_default  = 70.0;
             AR_default = 14.0;
             lambda_default = 0.28;
-            MTOM_default   = 330000; % kg
+            MTOM_default   = 360000; % kg
 
             hasStrut = true;
             yStrutFrac_default = 0.45;
-            strutShare_default = 0.25;
+            strutShare_default = 0.30;
             kwing_default = 100;
 
         otherwise
@@ -84,7 +84,7 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     if isfield(opts,'sigmaAllow'); sigmaAllow = opts.sigmaAllow; else; sigmaAllow = sigmaAllow_default; end
     if isfield(opts,'tauAllow');   tauAllow   = opts.tauAllow;   else; tauAllow   = tauAllow_default; end
 
-    if isfield(opts,'sweep'); sweep = opts.sweep; else; sweep = 0; end
+    if isfield(opts,'sweep'); sweep = opts.sweep; else; sweep = 26; end
 
     if isfield(opts,'enableAeroelastic')
         enableAeroelastic = opts.enableAeroelastic;
@@ -158,6 +158,18 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     if isfield(opts,'manholePenalty'); manholePenalty = opts.manholePenalty; else; manholePenalty = 0.02; end
     if isfield(opts,'attachPenalty');  attachPenalty  = opts.attachPenalty;  else; attachPenalty  = 0.03; end
     if isfield(opts,'torsionPenalty'); torsionPenalty = opts.torsionPenalty; else; torsionPenalty = 0.04; end
+
+     if isfield(opts,'strutFactor')
+        strutFactor = opts.strutFactor;
+    else
+        strutFactor = 0.12;   % 8% of wing realistic mass
+    end
+
+    if isfield(opts,'hingeFactor')
+        hingeFactor = opts.hingeFactor;
+    else
+        hingeFactor = 0.02;   % 2% of wing realistic mass
+    end
     %% ---------------- derived geometry ----------------
     S = b^2 / AR;
     semiSpan = b/2;
@@ -174,8 +186,8 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     x_LE = zeros(size(y));
     x_TE = c;
     x_QC = 0.25*c;
-    x_front_spar = 0.15*c;
-    x_rear_spar  = 0.65*c;
+    x_front_spar = 0.13*c;
+    x_rear_spar  = 0.73*c;
 
     %% ---------------- strut location ----------------
     if hasStrut
@@ -184,9 +196,60 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
         y_strut = NaN;
     end
 
+        %% ---------------- wingbox geometry ----------------
+    hBox = hBoxRatio * cr;
+    bBox = bBoxRatio * cr;
+
+    % raw spanwise scaling
+    hBox_y_raw = hBoxRatio * c;
+    bBox_y_raw = bBoxRatio * c;
+
+    % prevent unrealistically tiny outboard box dimensions
+    hBox_min = 0.35 * hBox;
+    bBox_min = 0.35 * bBox;
+
+    hBox_y = max(hBox_y_raw, hBox_min);
+    bBox_y = max(bBox_y_raw, bBox_min);
+
+    Am_y = bBox_y .* hBox_y;
+%% ---------------- geometry-based fuel capacity ----------------
+usableFrac = 0.73;   % usable tank fraction
+rhoFuel = 0.80;      % kg/L
+
+if isfield(opts,'centerTankSpan')
+    centerTankSpan = opts.centerTankSpan;   % m, spanwise width of centre tank
+else
+    centerTankSpan = 8.0;   % initial guess
+end
+
+if isfield(opts,'centerTankAreaFactor')
+    centerTankAreaFactor = opts.centerTankAreaFactor; % fraction of root box area
+else
+    centerTankAreaFactor = 0.90;
+end
+
+A_box_y = bBox_y .* hBox_y;   % wing box area along span
+
+% only wet wing region should count as wing tank volume
+wetMask = y <= fuelSpanFrac * semiSpan;
+
+V_wing_half_m3  = trapz(y(wetMask), A_box_y(wetMask));
+V_wing_total_m3 = 2 * usableFrac * V_wing_half_m3;
+
+% simple centre tank model based on root box area
+A_center_ref_m2  = centerTankAreaFactor * A_box_y(1);
+V_centerTank_m3  = usableFrac * A_center_ref_m2 * centerTankSpan;
+
+% total fuel capacity
+V_fuel_total_m3 = V_wing_total_m3 + V_centerTank_m3;
+V_fuel_total_L  = V_fuel_total_m3 * 1000;
+mFuel           = V_fuel_total_L * rhoFuel;   % kg
+
+% keep separate masses
+mFuel_center_kg     = V_centerTank_m3 * 1000 * rhoFuel;
+mFuel_wing_total_kg = V_wing_total_m3 * 1000 * rhoFuel;
     %% ---------------- masses ----------------
     mWing = kwing * S;
-    mFuel = fuelFrac * MTOM;
     Wtot  = MTOM * g;
 
     %% ---------------- distributed loads ----------------
@@ -202,18 +265,17 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     phiW = c;
     qStruct = WwingHalf * phiW / trapz(y,phiW); % downward
 
-    % fuel
-    fuelMask = y <= fuelSpanFrac * semiSpan;
-    phiFuel = c .* fuelMask;
+  % wing fuel only should be distributed along the wing
+fuelMask = y <= fuelSpanFrac * semiSpan;
+phiFuel = c .* fuelMask;
 
-    if any(phiFuel)
-        WfuelHalf = (mFuel * g) / 2;
-        qFuel = WfuelHalf * phiFuel / trapz(y,phiFuel); % downward
-    else
-        qFuel = zeros(size(y));
-    end
-
-    qNet_noStrut = qLift - qStruct - qFuel;
+if any(phiFuel)
+    WfuelHalf = (mFuel_wing_total_kg * g) / 2;
+    qFuel = WfuelHalf * phiFuel / trapz(y,phiFuel); % downward
+else
+    qFuel = zeros(size(y));
+end
+qNet_noStrut = qLift - qStruct - qFuel;
 
     %% ---------------- strut load sharing ----------------
     pointLoad = zeros(size(y));
@@ -321,22 +383,9 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     RootBM     = M(1);
     RootTorque = T(1);
 
-    %% ---------------- wingbox geometry ----------------
-    hBox = hBoxRatio * cr;
-    bBox = bBoxRatio * cr;
 
-    % raw spanwise scaling
-    hBox_y_raw = hBoxRatio * c;
-    bBox_y_raw = bBoxRatio * c;
 
-    % prevent unrealistically tiny outboard box dimensions
-    hBox_min = 0.35 * hBox;
-    bBox_min = 0.35 * bBox;
 
-    hBox_y = max(hBox_y_raw, hBox_min);
-    bBox_y = max(bBox_y_raw, bBox_min);
-
-    Am_y = bBox_y .* hBox_y;
 
     %% ---------------- preliminary torsional stiffness ----------------
     tRef0 = 0.006;   % 6 mm conceptual reference thickness
@@ -392,8 +441,8 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     end
 
     %% ---------------- sizing ----------------
-    Areq_root = abs(RootBM) / (sigmaAllow * hBox);
-    Areq_y    = Areq_root * abs(M) / max(abs(RootBM), 1e-9);
+Areq_y = abs(M) ./ max(sigmaAllow .* hBox_y, 1e-9);
+Areq_root = Areq_y(1);
 
     tWeb_req = abs(RootShear) / (2 * tauAllow * hBox);
     Am_root  = bBox * hBox;
@@ -404,8 +453,8 @@ function Results = TBW_StructuralAnalysis(configName, n, opts)
     tWeb_y_raw     = abs(V) ./ max(2 * tauAllow .* hBox_y, 1e-9);
     tTorsion_y_raw = abs(T) ./ max(2 * tauAllow .* Am_y,   1e-9);
 
-    tMin_web  = 0.004; % 4 mm
-    tMin_skin = 0.003; % 3 mm
+    tMin_web  = 0.005; % 4 mm
+    tMin_skin = 0.005; % 4 mm
 
     tWeb_y     = max(tWeb_y_raw, tMin_web);
     tTorsion_y = max(tTorsion_y_raw, tMin_skin);
@@ -519,6 +568,42 @@ EI_y = EAl .* Iyy_y;
     capMassHalf = trapz(y, 2 * Aeff_y * rhoAl);
     mWingRefined = 2 * capMassHalf * 1.8;
 
+           %% ---------------- TBW strut / hinge allowance ----------------
+    if hasStrut
+        W_strut_total_kg = strutFactor * W_wing_realistic_total_kg;
+        W_hinge_total_kg = hingeFactor * W_wing_realistic_total_kg;
+    else
+        W_strut_total_kg = 0.0;
+        W_hinge_total_kg = 0.0;
+    end
+
+    W_TBW_extra_total_kg = W_strut_total_kg + W_hinge_total_kg;
+
+        %% ---------------- loaded wing mass ----------------
+    % structure + total fuel carried in wing-related tanks
+   W_loaded_wing_total_kg = W_wing_realistic_total_kg + W_TBW_extra_total_kg + mFuel;
+
+        %% ---------------- fuel mass distribution ----------------
+    rhoFuel = 0.80;   % kg/L, conceptual jet fuel density
+
+    % total fuel already defined as mFuel
+
+
+ mFuel_total_kg = mFuel;
+
+% keep a simple wing split only if you need reporting
+innerFuelFrac_wing = 0.70;
+outerFuelFrac_wing = 0.30;
+
+mFuel_inner_kg = innerFuelFrac_wing * mFuel_wing_total_kg;
+mFuel_outer_kg = outerFuelFrac_wing * mFuel_wing_total_kg;
+
+    % corresponding volumes
+    VFuel_total_L  = mFuel_total_kg / rhoFuel;
+    VFuel_center_L = mFuel_center_kg / rhoFuel;
+    VFuel_inner_L  = mFuel_inner_kg  / rhoFuel;
+    VFuel_outer_L  = mFuel_outer_kg  / rhoFuel;
+
 
     %% ---------------- outputs ----------------
     Results = struct();
@@ -582,7 +667,11 @@ EI_y = EAl .* Iyy_y;
     Results.bBox_root_m = bBox;
     Results.hBox_y = hBox_y;
     Results.bBox_y = bBox_y;
-
+    Results.usableFrac = usableFrac;
+Results.V_wing_total_m3 = V_wing_total_m3;
+Results.V_centerTank_m3 = V_centerTank_m3;
+Results.V_fuel_total_m3 = V_fuel_total_m3;
+Results.V_fuel_total_L  = V_fuel_total_L;
     Results.Areq_root_m2 = Areq_root;
     Results.Areq_y_m2 = Areq_y;
     Results.Aeff_y_m2 = Aeff_y;
@@ -679,5 +768,20 @@ Results.GJ_y_Nm2 = GJ_y;
         Results.secondaryFactor = secondaryFactor;
     Results.W_secondary_total_kg = W_secondary_total_kg;
     Results.W_wing_realistic_total_kg = W_wing_realistic_total_kg;
+
+        Results.rhoFuel_kg_per_L = rhoFuel;
+
+    Results.mFuel_total_kg  = mFuel_total_kg;
+    Results.mFuel_center_kg = mFuel_center_kg;
+    Results.mFuel_inner_kg  = mFuel_inner_kg;
+    Results.mFuel_outer_kg  = mFuel_outer_kg;
+
+    Results.VFuel_total_L  = VFuel_total_L;
+    Results.VFuel_center_L = VFuel_center_L;
+    Results.VFuel_inner_L  = VFuel_inner_L;
+    Results.VFuel_outer_L  = VFuel_outer_L;
+
+    Results.W_loaded_wing_total_kg = W_loaded_wing_total_kg;
+ 
 end
    

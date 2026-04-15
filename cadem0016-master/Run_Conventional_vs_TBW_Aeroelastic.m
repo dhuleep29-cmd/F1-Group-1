@@ -10,7 +10,7 @@ close all
 AR0     = 14;
 span0   = 70;
 lambda0 = 0.28;
-sweep0  = 25;
+sweep0  = 26;
 MTOM0   = 350000;
 
 % ---------- conventional / cantilever ----------
