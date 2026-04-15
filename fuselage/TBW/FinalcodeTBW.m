@@ -6,7 +6,7 @@ clear; clc; close all;
 
 %% ---------------- GEOMETRY ----------------
 Lf = 59.8;              % fuselage length [m]
-D  = 5.57;              % fuselage dia meter [m]
+D  = 5.57;              % fuselage diameter [m]
 r  = D/2;               % fuselage radius [m]
 Sf = pi * D * Lf;       % fuselage wetted area [m^2]
 
@@ -36,23 +36,21 @@ Nx = 1000;
 x = linspace(0, Lf, Nx);
 dx = x(2) - x(1);
 
-%% ---------------- UNDERFLOOR AUXILIARY FUEL TANK INTEGRATION ----------------
-% Auxiliary fuel tank below main cargo deck
-% Longitudinal location provided/refined from team input
+%% ---------------- AUXILIARY FUEL LOAD REPRESENTATION ----------------
+% Auxiliary fuel represented as a distributed underfloor load
+% Tank region provided by Mass & Stability team
 
-x_tank_start = 26.0;           % [m]
-x_tank_end   = 31.0;           % [m]
-tank_length  = x_tank_end - x_tank_start;        % [m]
-x_tank_centre = 0.5 * (x_tank_start + x_tank_end);
+x_atank_start = 23.0;                 % [m]
+x_atank_end   = 33.0;                 % [m]
+L_atank       = x_atank_end - x_atank_start;      % [m]
+x_atank_centre = 0.5 * (x_atank_start + x_atank_end);
 
-m_fuel_aux = 6100;             % [kg] auxiliary fuel mass required
-rho_fuel = 800;                % [kg/m^3] Jet-A1 (kerosene-based fuel)
-V_fuel_aux = m_fuel_aux / rho_fuel;              % [m^3]
+m_fuel_aux = 30000;                   % [kg] auxiliary fuel mass
+rho_fuel = 800;                       % [kg/m^3] Jet-A1
+V_fuel_aux = m_fuel_aux / rho_fuel;   % [m^3]
 
-A_tank_use = V_fuel_aux / tank_length;           % [m^2] required usable tank area
-
-m_tank_integration = 300;      % [kg] structural allowance for supports/reinforcement
-
+A_atank_use = V_fuel_aux / L_atank;   % [m^2] equivalent required area
+m_tank_integration = 800;    % [kg] structural allowance for auxiliary tank system
 
 %% ---------------- DISTRIBUTED LOADS ----------------
 % Fuselage self-weight distributed over entire fuselage
@@ -64,14 +62,14 @@ payload_per_m = (m_payload * g * n) / L_cargo;   % [N/m]
 w_pay = zeros(size(x));
 w_pay(x >= x_cargo_start & x <= x_cargo_end) = payload_per_m;
 
-% Auxiliary fuel distributed only over tank region
-fuel_per_m = (m_fuel_aux * g * n) / tank_length;   % [N/m]
+% Auxiliary fuel distributed over auxiliary tank region
+aux_fuel_per_m = (m_fuel_aux * g * n) / L_atank;   % [N/m]
 
-w_fuel = zeros(size(x));
-w_fuel(x >= x_tank_start & x <= x_tank_end) = fuel_per_m;
+w_afuel = zeros(size(x));
+w_afuel(x >= x_atank_start & x <= x_atank_end) = aux_fuel_per_m;
 
 % Total distributed load (downward)
-w_total = w_fus + w_pay + w_fuel;           % [N/m]
+w_total = w_fus + w_pay + w_afuel;   % [N/m]
 
 %% ---------------- TOTAL DOWNWARD LOAD ----------------
 W_total = trapz(x, w_total);       % [N]
@@ -356,15 +354,15 @@ fprintf('Door size (W x H)        = %.2f m x %.2f m\n', door_width, door_height)
 fprintf('Door side                = %s\n', door_side);
 fprintf('Door mass added          = %.2f kg\n', m_door_total);
 
-fprintf('\n--- Underfloor Auxiliary Fuel Tank Integration ---\n');
-fprintf('Auxiliary tank start         = %.2f m\n', x_tank_start);
-fprintf('Auxiliary tank end           = %.2f m\n', x_tank_end);
-fprintf('Auxiliary tank length        = %.2f m\n', tank_length);
-fprintf('Auxiliary tank centre        = %.2f m\n', x_tank_centre);
+fprintf('\n--- Auxiliary Fuel Load Representation ---\n');
+fprintf('Auxiliary tank start         = %.2f m\n', x_atank_start);
+fprintf('Auxiliary tank end           = %.2f m\n', x_atank_end);
+fprintf('Auxiliary tank length        = %.2f m\n', L_atank);
+fprintf('Auxiliary tank centre        = %.2f m\n', x_atank_centre);
 fprintf('Auxiliary fuel mass          = %.2f kg\n', m_fuel_aux);
 fprintf('Auxiliary fuel volume        = %.2f m^3\n', V_fuel_aux);
-fprintf('Required usable tank area    = %.2f m^2\n', A_tank_use);
-fprintf('Tank integration mass        = %.2f kg\n', m_tank_integration);
+fprintf('Equivalent required area     = %.2f m^2\n', A_atank_use);
+
 %% ---------------- MASS CALCULATION ----------------
 rho = 2780;                     % aluminium density [kg/m^3]
 circumference = 2 * pi * r;     % [m]
@@ -454,3 +452,4 @@ grid on;
 xlabel('x along fuselage [m]');
 ylabel('Cumulative mass [kg]');
 title('Cumulative Fuselage Mass Along Length');
+
